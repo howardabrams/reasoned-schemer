@@ -225,3 +225,232 @@
               (fresh [w x y z]
                      (== out (llist (list :g :g) (list :e w) (list x y) z))
                      (listofo twinso out))))))
+
+(defn loto [l]
+  (listofo twinso l))
+
+(defn eq-first? [l x]
+  (= (first l) x))
+
+(deftest p51-1
+  (is (= true (eq-first? '(:a :b :c) :a))))
+
+(deftest p51-2
+  (is (= false (eq-first? '(:a :b :c) :d))))
+
+(defn member? [x l]
+  (cond
+   (empty? l) false
+   (eq-first? l x) true
+   :else (member? x (rest l))))
+
+(deftest p52
+  (is (= true (member? :olive '(:virgin :olive :oil)))))
+
+(defn eq-firsto [l x]
+  (firsto l x))
+
+;; membero is already part of core logic, but I suppose it could be
+;; defined as:
+;;
+(defn memberoo [x l]
+  (conde
+   [(eq-firsto l x) s#]
+   [(fresh [d]
+           (resto l d)
+           (memberoo x d))]))
+
+(deftest p57
+  (is (= '(true)
+         (run* [q]
+               (membero :olive '(:virgin :olive :oil))
+               (== true q)))))
+
+(deftest p58
+  (is (= '(:hummus)
+         (run 1 [y]
+              (membero y '(:hummus :with :pita))))))
+
+(deftest p59
+  (is (= '(:with)
+         (run 1 [y]
+              (membero y '(:with :pita))))))
+
+(deftest p60
+  (is (= '(:pita)
+         (run 1 [y]
+              (membero y '(:pita))))))
+
+(deftest p61
+  (is (= ()
+         (run* [y]
+              (membero y ())))))
+
+(deftest p62
+  (is (= '(:hummus :with :pita)
+         (run* [y]
+              (membero y '(:hummus :with :pita))))))
+
+(defn identity [l]
+  (run* [y] (membero y l)))
+
+;; Note: '(:pasta x :fragioli) is NOT the same as (list :pasta x :fragioli)
+(deftest p66
+  (is (= '(:e)
+         (run* [x]
+               (membero :e (list :pasta x :fragioli))))))
+
+(deftest p69
+  (is (= '(_.0)
+         (run 1 [x]
+              (membero :e (list :pasta :e x :fragiolio))))))
+
+(deftest p70
+  (is (= '(:e)
+         (run 1 [x]
+              (membero :e (list :pasta x :e :fragiolio))))))
+
+(deftest p71
+  (is (= '([:e _.0] [_.0 :e])
+         (run* [r]
+               (fresh [x y]
+                      (membero :e (list :pasta x :fagioli y))
+                      (== [x y] r))))))
+
+(deftest p73
+  (is (= (list '(:tofu . _.0))  ;; Not sure the exact syntax to get this to pass
+         (run 1 [l]
+              (membero :tofu l)))))
+
+(deftest p76
+  (is (= (list '(:tofu . _.0)
+               '(_.0 :tofu . _.1)
+               '(_.0 _.1 :tofu . _.2)
+               '(_.0 _.1 _.2 :tofu . _.3)
+               '(_.0 _.1 _.2 _.3 :tofu . _.4))
+         (run 5 [l]
+              (membero :tofu l)))))
+
+(defn pmembero [x l]
+  (conde
+   [(emptyo l) u#]
+   [(eq-firsto l x) (resto l ())]
+   [(fresh [d]
+           (resto l d)
+           (pmembero x d))]))
+
+(deftest p80
+  (is (= (list '(:tofu)
+               '(_.0 :tofu)
+               '(_.0 _.1 :tofu)
+               '(_.0 _.1 _.2 :tofu)
+               '(_.0 _.1 _.2 _.3 :tofu))
+         (run 5 [l]
+              (pmembero :tofu l)))))
+
+(deftest p81
+  (is (= '(true)
+         (run* [q]
+               (pmembero :tofu (list :a :b :tofu :d :tofu))
+               (== true q)))))
+
+(defn pmembero [x l]
+  (conde
+   [(emptyo l) u#]
+   [(eq-firsto l x) (resto l ())]
+   [(eq-firsto l x) s#]
+   [(fresh [d]
+           (resto l d)
+           (pmembero x d))]))
+
+(deftest p84
+  (is (= '(true true true)
+         (run* [q]
+               (pmembero :tofu (list :a :b :tofu :d :tofu))
+               (== true q)))))
+
+(defn pmembero [x l]
+  (conde
+;   [(emptyo l) u#]
+   [(eq-firsto l x) (resto l ())]
+   [(eq-firsto l x) (fresh [a d]   ;; '(a . d) => [a d]
+                           (resto l (list a d)))]
+   [(fresh [d]
+           (resto l d)
+           (pmembero x d))]))
+
+(deftest p88
+  (is (= '(true true)
+         (run* [q]
+               (pmembero :tofu (list :a :b :tofu :d :tofu))
+               (== true q)))))
+
+(deftest p89
+  (is (= (list
+          '(:tofu)
+          '(:tofu _.0 _.1)
+          '(_.0 :tofu)
+          '(_.0 :tofu _.1 _.2)
+          '(_.0 _.1 :tofu)
+          '(_.0 _.1 :tofu _.2 _.3)
+          '(_.0 _.1 _.2 :tofu)
+          '(_.0 _.1 _.2 :tofu _.3 _.4)
+          '(_.0 _.1 _.2 _.3 :tofu)
+          '(_.0 _.1 _.2 _.3 :tofu _.4 _.5)
+          '(_.0 _.1 _.2 _.3 _.4 :tofu)
+          '(_.0 _.1 _.2 _.3 _.4 :tofu _.5 _.6))
+         (run 12 [l]
+              (pmembero :tofu l)))))
+
+
+(defn pmembero [x l]
+  (conde
+   [(eq-firsto l x) (fresh [a d]
+                           (resto l (list a d)))]
+   [(eq-firsto l x) (resto l ())]
+   [(fresh [d]
+           (resto l d)
+           (pmembero x d))]))
+
+(deftest p94
+  (is (= (list
+          '(:tofu _.0 _.1)
+          '(:tofu)
+          '(_.0 :tofu _.1 _.2)
+          '(_.0 :tofu)
+          '(_.0 _.1 :tofu _.2 _.3)
+          '(_.0 _.1 :tofu)
+          '(_.0 _.1 _.2 :tofu _.3 _.4)
+          '(_.0 _.1 _.2 :tofu)
+          '(_.0 _.1 _.2 _.3 :tofu _.4 _.5)
+          '(_.0 _.1 _.2 _.3 :tofu)
+          '(_.0 _.1 _.2 _.3 _.4 :tofu _.5 _.6)
+          '(_.0 _.1 _.2 _.3 _.4 :tofu))
+         (run 12 [l]
+              (pmembero :tofu l)))))
+
+(defn first-value [l]
+  (run 1 [y]
+       (membero y l)))
+
+(deftest p96
+  (is (= '(:pasta)
+         (first-value '(:pasta :e :fagioli)))))
+
+
+(defn memberrevo [x l]
+  (conde
+   ; [(emptyo l) u#]
+   [(fresh [d]
+           (resto l d)
+           (memberrevo x d))]
+   [(eq-firsto l x)]))
+
+(deftest p100
+  (is (= '(:fagioli :e :pasta)
+         (run* [x]
+               (memberrevo x '(:pasta :e :fagioli))))))
+
+(defn reverse-list [l]
+  (run* [y]
+        (memberrevo y l)))
